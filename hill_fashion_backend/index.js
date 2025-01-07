@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const path = require("path");
 const cors = require("cors");
+const { error } = require("console");
+const { json } = require("stream/consumers");
 
 app.use(express.json());
 app.use(cors());
@@ -34,12 +36,23 @@ const upload = multer({storage:storage});
 
 app.use('/images', express.static('upload/images'));
 
-app.post("/upload",upload.single('product'),(req,res)=>{
+app.post("/upload", upload.single('product'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ success: false, error: 'Không có tệp nào được tải lên' });
+    }
+
     res.json({
-        success:1,
-        image_url:`http://localhost:${port}/images/${req.file.filename}`
-    })
+        success: 1,
+        image_url: `http://localhost:${port}/images/${req.file.filename}`
+    });
 });
+
+//app.post("/upload",upload.single('product'),(req,res)=>{
+    //res.json({
+        //success:1,
+        //image_url:`http://localhost:${port}/images/${req.file.filename}`
+    //})
+//});
 
 // Tạo sản phẩm
 
@@ -123,6 +136,82 @@ app.get('/allproducts', async (req,res)=>{
     console.log("Tất cả sản phẩm đã được lấy");
     res.send(products);
 })
+
+//  Tạo schema cho mô hình người dùng
+
+const Users = mongoose.model('Users',{
+    name:{
+        type: String,
+    },
+    email:{
+        type: String,
+        unique: true,
+    },
+    password:{
+        type: String,
+    },
+    cartData:{
+        type: Object,
+    },
+    date:{
+        type: Date,
+        default: Date.now,
+    }
+})
+
+// Tạo endpoint để đăng ký người dùng
+app.post('/signup', async(req,res)=>{
+    let check = await Users.findOne({email: req.body.email});
+    if(check){
+        return res.status(400).json({success: false, error:"Đã tìm thấy người dùng tồn tại với cùng địa chỉ email"})
+    }
+    let cart = {};
+    for(let i=0; i<300; i++){
+        cart[i]=0;
+    }
+    const user = new Users({
+        name: req.body.username,
+        email: req.body.email,
+        password: req.body.password,
+        cartData: cart,
+    })
+
+    await user.save();
+
+    const data = {
+        user:{
+            id: user.id
+        }
+    }
+
+    const token = jwt.sign(data,'secret_ecom');
+    res.json({success: true, token})
+})
+
+// Tạo endpoint cho chức năng đăng nhập người dùng
+app.post('/login', async(req,res)=>{
+    let user = await Users.findOne({email: req.body.email});
+    if(user){
+        const passCompare = req.body.password === user.password;
+        if(passCompare){
+            const data = {
+                user:{
+                    id: user.id
+                }
+            }
+            const token = jwt.sign(data,'secret_ecom');
+            res.json({success: true, token})
+        }
+        else{
+            res.json({success: false,error:"Sai mật khẩu"});
+        }
+    }
+    else{
+        res.json({success: false,error:"Sai địa chỉ email"});
+    }
+})
+
+// Tạo endpoint cho bộ sưu tập mới
 
 app.listen(port,(error)=>{
     if (!error){
