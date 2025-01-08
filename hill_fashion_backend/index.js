@@ -212,6 +212,82 @@ app.post('/login', async(req,res)=>{
 })
 
 // Tạo endpoint cho bộ sưu tập mới
+app.get('/newcollections', async(req,res)=>{
+    let products = await Product.find({});
+    let newcollection = products.slice(1).slice(-8);
+    console.log("Đã lấy dữ liệu bộ sưu tập mới");
+    res.send(newcollection);
+    
+})
+
+// Tạo endpoint cho sản phẩm phổ biến ở nữ
+app.get('/popularinwomen', async(req,res)=>{
+    let products = await Product.find({category:"women"});
+    let popular_in_women = products.slice(0,4);
+    console.log("Sản phẩm phổ biến ở nữ đã được lấy");
+    res.send(popular_in_women);
+    
+})
+
+// Tạo endpoint cho sản phẩm liên quan theo danh mục
+app.get('/relatedproducts/:category', async (req, res) => {
+    const { category } = req.params;
+    try {
+        const relatedProducts = await Product.find({ category });
+        const limitedProducts = relatedProducts.slice(0, 4);
+        console.log(`Sản phẩm liên quan đến ${category} đã được lấy`);
+        res.status(200).send(limitedProducts);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send("Đã xảy ra lỗi khi lấy sản phẩm liên quan.");
+    }
+});
+
+
+// Tạo middleware để lấy thông tin người dùng
+const fetchUser =  async(req,res,next)=>{
+    const token = req.header('auth-token');
+    if(!token){
+        res.status(401).send({error:"Vui lòng xác thực token hợp lệ"})
+    }
+    else{
+        try{
+            const data = jwt.verify(token,'secret_ecom');
+            req.user = data.user;
+            next();
+        } catch(error){
+            res.status(401).send({error:"Vui lòng xác thực token hợp lệ"})
+        }
+    }
+}
+
+// Tạo endpoint để thêm sản phẩm giỏ hàng
+app.post('/addtocart',fetchUser , async(req,res)=>{
+    console.log("added",req.body.itemId);
+    let userData = await Users.findOne({_id:req.user.id});
+    userData.cartData[req.body.itemId] +=1;
+    await Users.findOneAndUpdate({_id:req.user.id},{cartData:userData.cartData});
+    res.send("Added")
+})
+
+// Tạo endpoint để xóa sản phẩm khỏi giỏ hàng
+app.post('/removefromcart',fetchUser,async(req,res)=>{
+    console.log("removed",req.body.itemId);
+    let userData = await Users.findOne({_id:req.user.id});
+    if(userData.cartData[req.body.itemId]>0)
+    userData.cartData[req.body.itemId] -=1;
+    await Users.findOneAndUpdate({_id:req.user.id},{cartData:userData.cartData});
+    res.send("Removed")
+})
+
+//Tạo endpoint để lấy dữ liệu giỏ hàng
+app.post('/getcart', fetchUser, async(req,res)=>{
+    console.log("GetCart");
+    let userData = await Users.findOne({_id:req.user.id});
+    res.json(userData.cartData);
+})
+
+//
 
 app.listen(port,(error)=>{
     if (!error){
