@@ -68,7 +68,7 @@ const LoginSignup = () =>{
                 <button onClick={()=>{state==="Đăng nhập"?login():signup()}}>Tiếp tục</button>
                 {state==="Đăng ký"?<p className="loginsignup-login">Đã có tài khoản? <span onClick={()=>{setState("Đăng nhập")}}>Đăng nhập tại đây</span></p>
                 :
-                <p className="loginsignup-login">Tạo tài khoản <span onClick={()=>{setState("Đăng ký")}}>Nhấn vào đây</span></p>
+                <p className="loginsignup-login">Tạo tài khoản?  <span onClick={()=>{setState("Đăng ký")}}>Nhấn vào đây</span></p>
                 }
                 <div className="loginsignup-agree">
                     <input type="checkbox" name="" id=""/>

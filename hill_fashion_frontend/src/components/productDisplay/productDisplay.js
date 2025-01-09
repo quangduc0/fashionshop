@@ -51,8 +51,6 @@ const ProductDisplay = (props) => {
                     </div>
                 </div>
                 <button onClick={()=>{addToCart(product.id)}}>Thêm vào giỏ hàng</button>
-                <p className="productdisplay-right-category"><span>Loại: </span>Áo nữ, Áo thun, Crop Top</p>
-                <p className="productdisplay-right-category"><span>Nhãn: </span>Thiết kế hiện đại, Sản phẩm mới nhất</p>
             </div>
         </div>
     );
